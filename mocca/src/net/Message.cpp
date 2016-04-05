@@ -1,5 +1,7 @@
 #include "mocca/net/Message.h"
 
+#include "mocca/base/Memory.h"
+
 using namespace mocca::net;
 
 Message::Message(std::shared_ptr<const std::vector<uint8_t>> data)
@@ -10,8 +12,9 @@ Message::Message(Message&& other)
     : data_(other.data_)
     , next_(std::move(other.next_)) {}
 
-void Message::append(std::unique_ptr<Message> message) {
-    next_ = std::move(message);
+Message* Message::append(std::shared_ptr<const std::vector<uint8_t>> data) {
+    next_ = mocca::make_unique<Message>(data);
+    return next_.get();
 }
 
 std::shared_ptr<const std::vector<uint8_t>> Message::data() const {

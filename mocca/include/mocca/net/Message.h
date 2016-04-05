@@ -11,7 +11,7 @@ public:
     Message(std::shared_ptr<const std::vector<uint8_t>> data);
     Message(Message&& other);
 
-    void append(std::unique_ptr<Message> message);
+    Message* append(std::shared_ptr<const std::vector<uint8_t>> data);
 
     std::shared_ptr<const std::vector<uint8_t>> data() const;
     const Message* next() const;
