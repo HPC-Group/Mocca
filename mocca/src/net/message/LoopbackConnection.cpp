@@ -9,6 +9,7 @@
 #include "mocca/net/message/LoopbackConnection.h"
 
 #include "mocca/net/NetworkError.h"
+#include "mocca/base/Thread.h"
 
 using namespace mocca;
 using namespace mocca::net;
@@ -47,10 +48,16 @@ void LoopbackConnection::send(Message message) const {
 }
 
 Message LoopbackConnection::receive() const {
-    if (!isConnected()) {
-        throw ConnectionClosedError("Connection to peer " + connectionID_->peerEndpoint.toString() + " has been closed", *connectionID_,
-                                    __FILE__, __LINE__);
+    mocca::Nullable<Message> message;
+    while (message.isNull()) {
+        message = receiveQueue_->dequeue(std::chrono::milliseconds(100));
+        if (!isConnected()) {
+            throw ConnectionClosedError("Connection to peer " + connectionID_->peerEndpoint.toString() + " has been closed", *connectionID_,
+                __FILE__, __LINE__);
+        }
+        if (Runnable::isCurrentInterrupted()) {
+            throw ThreadInterrupt(__FILE__, __LINE__);
+        }
     }
-    auto data = receiveQueue_->dequeue(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::seconds(30)));
-    return data.isNull() ? Message() : data.release();
+    return message.release();
 }
