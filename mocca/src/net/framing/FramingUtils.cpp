@@ -34,17 +34,16 @@ void mocca::net::readUntil(IStreamConnection& stream, std::vector<uint8_t>& buff
 }
 
 void mocca::net::readExactly(IStreamConnection& stream, std::vector<uint8_t>& buffer, uint32_t size) {
+    auto oldSize = buffer.size();
+    buffer.resize(buffer.size() + size);
+    auto startPos = buffer.data() + oldSize;
     uint32_t bytesTotal = 0;
-    std::vector<uint8_t> chunk(size);
     while (bytesTotal < size) {
         if (Runnable::isCurrentInterrupted()) {
             throw ThreadInterrupt(__FILE__, __LINE__);
         }
-        auto bytesReceived = stream.receive(chunk.data(), size - bytesTotal);
-        buffer.insert(end(buffer), begin(chunk), begin(chunk) + bytesReceived);
+        auto bytesReceived = stream.receive(startPos + bytesTotal, size - bytesTotal);
         bytesTotal += bytesReceived;
-        chunk.clear();
-        chunk.resize(size);
     }
 }
 
